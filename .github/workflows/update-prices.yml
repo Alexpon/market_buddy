@@ -5,6 +5,7 @@ on:
   workflow_dispatch: {} # Actions 頁面可手動 Run workflow
 permissions:
   contents: write
+  actions: write # 觸發部署 workflow 用
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -18,9 +19,22 @@ jobs:
       - name: 抓取行情
         run: npm run update-prices
       - name: 提交 prices.json
+        id: commit
         run: |
           git config user.name "price-bot"
           git config user.email "actions@github.com"
           git add public/prices.json
-          git diff --cached --quiet || git commit -m "行情更新 $(date +'%Y-%m-%d')"
-          git push
+          if git diff --cached --quiet; then
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "行情更新 $(date +'%Y-%m-%d')"
+            git push
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+          fi
+      # GITHUB_TOKEN 的 push 不會觸發其他 workflow（GitHub 防遞迴），
+      # 行情有更新時需顯式觸發部署，新 prices.json 才會上線
+      - name: 觸發部署
+        if: steps.commit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main -R ${{ github.repository }}
