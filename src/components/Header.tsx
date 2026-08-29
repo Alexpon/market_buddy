@@ -17,7 +17,7 @@ export default function Header({ month, day, year, tag, onRefresh }: Props) {
       <h1>
         菜市場比價<span className="tag">菜・果・魚・肉</span>
       </h1>
-      <p>{`今天 ${year}/${month}/${day}・打✔的是本月當季，價格會漂亮`}</p>
+      <p>{`今天 ${year}/${month}/${day}・標「旺」的是本月當季，價格會漂亮`}</p>
       <div className="freshrow">
         <span className={"fresh" + (tag.live ? " live" : "")}>{tag.text}</span>
         <button id="refreshBtn" onClick={onRefresh}>

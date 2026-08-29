@@ -18,7 +18,7 @@ export default function ItemGrid({ items, month, onSelect }: Props) {
         return (
           <button key={it.n} className={"item" + (hot ? " season" : "")} onClick={() => onSelect(it)}>
             <div className="nm">{it.n}</div>
-            <div className="pk">{seasonSub(it, month)}</div>
+            <div className="pk">{seasonSub(it)}</div>
           </button>
         );
       })}

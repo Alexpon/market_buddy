@@ -44,9 +44,9 @@ describe("欄位正規化（實測欄位名）", () => {
 
 describe("aggregate", () => {
   const items = [
-    { n: "高麗菜", a: [], c: "葉菜", w: [15, 25], peak: [1], api: ["甘藍"] },
-    { n: "台灣鯛", a: [], c: "海鮮", w: [55, 90], peak: [1], api: ["吳郭魚"] },
-    { n: "豬五花", a: [], c: "肉類", w: [280, 380], retail: true, peak: [1] },
+    { n: "高麗菜", a: [], c: "葉菜", w: [15, 25], peak: [1], api: ["甘藍"], pick: "測試用挑選要領" },
+    { n: "台灣鯛", a: [], c: "海鮮", w: [55, 90], peak: [1], api: ["吳郭魚"], pick: "測試用挑選要領" },
+    { n: "豬五花", a: [], c: "肉類", w: [280, 380], retail: true, peak: [1], pick: "測試用挑選要領" },
   ] as Item[];
   const rows = [
     { CropName: "甘藍 初秋", Avg_Price: 20 },

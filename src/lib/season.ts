@@ -14,9 +14,8 @@ export function seasonBadge(it: Item, month: number): { text: string; cls: Badge
   return { text: "非產季", cls: "off" };
 }
 
-/** 列表卡副標 */
-export function seasonSub(it: Item, month: number): string {
+/** 列表卡副標：一律顯示盛產月份；當季與否由卡片的「旺」角標表達 */
+export function seasonSub(it: Item): string {
   if (isAllYear(it)) return "全年供應";
-  if (inSeason(it, month)) return "✔ 本月當季";
   return `盛產 ${it.peak[0]}–${it.peak[it.peak.length - 1]}月`;
 }
