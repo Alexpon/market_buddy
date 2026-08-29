@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>菜市場比價</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --tarp:#17453A; --tarp-deep:#0E2F27; --paper:#FFFDF7; --ink:#1B1B18;
+  --card-green:#C6F53F; --card-yellow:#FFE94A; --card-pink:#FF5C8A;
+  --muted:#6E6A5E; --line:#E4DFD2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:"Noto Sans TC",system-ui,sans-serif;
+  background:var(--tarp);
+  background-image:repeating-linear-gradient(90deg,transparent 0 46px,rgba(255,255,255,.04) 46px 92px);
+  color:var(--ink); min-height:100vh; padding-bottom:60px;
+}
+.wenkai{font-family:"LXGW WenKai TC","Noto Sans TC",sans-serif}
+header{padding:20px 16px 12px;color:#F2EFE4}
+header h1{font-family:"LXGW WenKai TC","Noto Sans TC",sans-serif;font-size:30px;letter-spacing:4px;font-weight:400}
+header h1 .tag{
+  display:inline-block;background:var(--card-yellow);color:var(--ink);
+  font-size:13px;letter-spacing:2px;padding:2px 8px;margin-left:8px;
+  transform:rotate(-2deg);vertical-align:middle;border-radius:2px;
+  font-family:"Noto Sans TC";font-weight:700;
+}
+header p{font-size:12.5px;opacity:.75;margin-top:6px;letter-spacing:.5px}
+.freshrow{display:flex;align-items:center;gap:8px;margin-top:8px}
+.fresh{font-size:12px;color:#CFE3D5;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:3px 10px}
+.fresh.live{background:rgba(198,245,63,.18);border-color:var(--card-green);color:#E9FFC0}
+#refreshBtn{
+  border:1px solid rgba(255,255,255,.35);background:transparent;color:#F2EFE4;
+  border-radius:999px;padding:3px 12px;font-size:12px;font-family:inherit;
+}
+.sheet{background:var(--paper);border-radius:18px 18px 0 0;min-height:70vh;padding:16px 14px 32px;box-shadow:0 -6px 24px rgba(0,0,0,.25)}
+.search{display:flex;align-items:center;gap:8px;border:2.5px solid var(--ink);border-radius:12px;padding:10px 12px;background:#fff}
+.search input{border:none;outline:none;flex:1;font-size:17px;background:transparent;font-family:inherit}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 2px 4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;border:1.5px solid var(--ink);border-radius:999px;padding:6px 14px;font-size:14px;background:#fff;color:var(--ink);font-family:inherit;font-weight:500}
+.chip.on{background:var(--ink);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:9px;margin-top:12px}
+.item{border:1.5px solid var(--line);border-radius:12px;background:#fff;padding:10px 8px;text-align:center;font-family:inherit;position:relative}
+.item .nm{font-size:16px;font-weight:700;letter-spacing:1px}
+.item .pk{font-size:11px;color:var(--muted);margin-top:3px}
+.item.season{border-color:var(--ink);background:#FBFFE9}
+.item.season::after{
+  content:"旺";position:absolute;top:-7px;right:-6px;
+  background:var(--card-green);border:1.5px solid var(--ink);
+  font-size:11px;font-weight:900;width:22px;height:22px;line-height:19px;
+  border-radius:50%;transform:rotate(8deg);
+}
+.empty{color:var(--muted);text-align:center;padding:30px 0;font-size:14px}
+.overlay{position:fixed;inset:0;background:rgba(14,47,39,.55);display:none;z-index:9}
+.overlay.show{display:block}
+.panel{
+  position:fixed;left:0;right:0;bottom:0;z-index:10;
+  background:var(--paper);border-radius:20px 20px 0 0;
+  padding:18px 18px calc(24px + env(safe-area-inset-bottom));
+  transform:translateY(105%);transition:transform .28s ease;
+  max-height:88vh;overflow-y:auto;box-shadow:0 -8px 30px rgba(0,0,0,.35);
+}
+.panel.show{transform:translateY(0)}
+@media (prefers-reduced-motion:reduce){.panel{transition:none}}
+.grab{width:44px;height:5px;border-radius:3px;background:#D8D2C2;margin:0 auto 14px}
+.p-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.p-name{font-size:30px;font-weight:400;letter-spacing:3px}
+.p-cat{font-size:13px;color:var(--muted)}
+.season-line{margin-top:10px;font-size:14.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dot-row{display:flex;gap:3px}
+.mdot{width:16px;height:16px;border-radius:3px;background:#EFEAD9;font-size:9px;color:#B7B09A;display:grid;place-items:center}
+.mdot.on{background:var(--card-green);color:var(--ink);font-weight:700;border:1px solid var(--ink)}
+.mdot.now{outline:2px solid var(--ink);outline-offset:1px}
+.badge{font-size:13px;font-weight:700;padding:3px 10px;border-radius:999px;border:1.5px solid var(--ink)}
+.badge.in{background:var(--card-green)}
+.badge.off{background:#EFEAD9;color:var(--muted);border-color:#C9C2AD}
+.badge.all{background:#E4F0FF;border-color:#7FA6D9;color:#2B4E7E}
+.ref{margin-top:14px;border:2px dashed var(--ink);border-radius:12px;padding:12px 14px;background:#fff}
+.ref .lbl{font-size:12.5px;color:var(--muted);letter-spacing:1px}
+.ref .rng{font-size:26px;font-weight:900;margin-top:2px}
+.ref .rng small{font-size:14px;font-weight:500;color:var(--muted)}
+.ref .sub{font-size:12.5px;color:var(--muted);margin-top:4px}
+.ref .src{font-size:11.5px;margin-top:6px;display:inline-block;padding:2px 8px;border-radius:999px;background:#F0EDE2;color:var(--muted)}
+.ref .src.live{background:var(--card-green);color:var(--ink);font-weight:700}
+.ask{margin-top:18px}
+.ask .q{font-size:15px;font-weight:700;letter-spacing:1px}
+.inrow{display:flex;gap:10px;margin-top:10px}
+.inrow input{
+  flex:1;border:2.5px solid var(--ink);border-radius:12px;
+  font-size:26px;font-weight:700;padding:10px 14px;width:80px;min-width:0;
+  font-family:inherit;outline:none;background:#fff;
+}
+.inrow input:focus{box-shadow:0 0 0 3px rgba(198,245,63,.7)}
+.unit{display:flex;border:2.5px solid var(--ink);border-radius:12px;overflow:hidden}
+.unit button{border:none;background:#fff;font-size:15px;font-weight:700;padding:0 11px;font-family:inherit;color:var(--muted);white-space:nowrap}
+.unit button.on{background:var(--ink);color:#fff}
+.unit button+button{border-left:1.5px solid var(--line)}
+.pc-hint{font-size:12.5px;color:var(--muted);margin-top:8px;display:none;line-height:1.6}
+.pc-hint.show{display:block}
+.stamp{margin-top:16px;border:3px solid var(--ink);border-radius:14px;padding:16px;text-align:center;display:none;transform:rotate(-1deg)}
+.stamp.show{display:block}
+.stamp .big{font-size:44px;letter-spacing:6px;line-height:1.1}
+.stamp .why{font-size:14px;margin-top:8px;font-family:"Noto Sans TC";letter-spacing:.5px}
+.stamp.cheap{background:var(--card-green)}
+.stamp.fair{background:var(--card-yellow)}
+.stamp.exp{background:var(--card-pink);color:#fff}
+.stamp.exp .big{color:#fff}
+.stamp.exp .why{color:#FFEFF4}
+.live{margin-top:16px}
+.live button{width:100%;border:1.5px solid var(--ink);background:#fff;border-radius:12px;padding:11px;font-size:15px;font-weight:700;font-family:inherit}
+.live .out{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6}
+.live a{color:var(--tarp);font-weight:700}
+footer{color:#CFE3D5;font-size:12px;line-height:1.7;padding:18px 18px 0;opacity:.85}
+footer a{color:var(--card-yellow)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>菜市場比價<span class="tag">菜・果・魚・肉</span></h1>
+  <p id="today"></p>
+  <div class="freshrow">
+    <span class="fresh" id="freshTag">行情：內建基準值</span>
+    <button id="refreshBtn">🔄 更新行情</button>
+  </div>
+</header>
+
+<div class="sheet">
+  <div class="search">
+    <span>🔍</span>
+    <input id="q" type="search" placeholder="找菜、水果、魚、肉（例：鮭魚、雞腿）" autocomplete="off">
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" style="display:none">找不到這一項，換個名字試試？</div>
+</div>
+
+<footer>
+  蔬果基準：農業部「農產品批發市場交易行情」；漁產基準：「漁產品批發市場交易行情」；肉類為市場零售概略值（拍賣資料為活體毛豬/家禽，與零售分切價差異大，故不自動更新）。
+  零售參考＝批發×1.5～2；單位重量為常見中等大小估值。詳情見
+  <a href="https://amis.afa.gov.tw" target="_blank" rel="noopener">批發行情站</a>。
+</footer>
+
+<div class="overlay" id="ov"></div>
+<div class="panel" id="panel">
+  <div class="grab"></div>
+  <div class="p-head">
+    <div class="p-name wenkai" id="pName"></div>
+    <div class="p-cat" id="pCat"></div>
+  </div>
+  <div class="season-line">
+    <span class="badge" id="pBadge"></span>
+    <span style="font-size:13px;color:var(--muted)" id="pDotsLbl">盛產月份：</span>
+    <div class="dot-row" id="pDots"></div>
+  </div>
+  <div class="ref">
+    <div class="lbl">合理零售參考價（這個月）</div>
+    <div class="rng" id="pRange"></div>
+    <div class="sub" id="pRangeKg"></div>
+    <div class="src" id="pSrc"></div>
+  </div>
+  <div class="ask">
+    <div class="q">你看到的價格是多少？</div>
+    <div class="inrow">
+      <input id="price" type="number" inputmode="decimal" placeholder="0" min="0">
+      <div class="unit" id="unitBox">
+        <button id="uJin" class="on">元/台斤</button><button id="uKg">元/公斤</button><button id="uPc" style="display:none"></button>
+      </div>
+    </div>
+    <div class="pc-hint" id="pcHint"></div>
+  </div>
+  <div class="stamp" id="stamp">
+    <div class="big wenkai" id="stampBig"></div>
+    <div class="why" id="stampWhy"></div>
+  </div>
+  <div class="live">
+    <button id="liveBtn">查最新批發行情（農業部 API）</button>
+    <div class="out" id="liveOut"></div>
+  </div>
+</div>
+
+<script>
+// ── 基準資料 ─────────────────────────────────────────────
+// w:      基準價區間 [低,高] 元/公斤。預設為批發價（會 ×1.5~2 換零售）
+// retail: true 表示 w 已是零售價（肉類、進口品用），不再加成
+// peak:   盛產月份（1-12）；12 個月全滿 = 全年供應
+// pc:     論個計價 [單位名, 一單位約幾公斤]
+// api:    自動更新用的官方品名關鍵字（prices.json 比對用，見 scripts/）
+const CATS = ["全部","葉菜","瓜果茄豆","根莖蔥蒜","菇菌","水果","海鮮","肉類"];
+const ALL12=[1,2,3,4,5,6,7,8,9,10,11,12];
+const DB = [
+ // 葉菜
+ {n:"高麗菜",a:["甘藍"],c:"葉菜",w:[15,25],peak:[12,1,2,3,4],pc:["顆",1.8]},
+ {n:"大白菜",a:["包心白菜"],c:"葉菜",w:[12,20],peak:[11,12,1,2,3],pc:["顆",1.5]},
+ {n:"小白菜",a:[],c:"葉菜",w:[25,40],peak:[10,11,12,1,2,3,4],pc:["把",0.3]},
+ {n:"青江菜",a:["青江白菜"],c:"葉菜",w:[25,40],peak:[10,11,12,1,2,3,4],pc:["把",0.3]},
+ {n:"空心菜",a:["蕹菜"],c:"葉菜",w:[25,45],peak:[4,5,6,7,8,9,10],pc:["把",0.3]},
+ {n:"菠菜",a:[],c:"葉菜",w:[40,70],peak:[11,12,1,2,3],pc:["把",0.25]},
+ {n:"地瓜葉",a:["甘藷葉"],c:"葉菜",w:[25,40],peak:[4,5,6,7,8,9,10],pc:["把",0.3]},
+ {n:"A菜",a:["萵苣","大陸妹"],c:"葉菜",w:[25,40],peak:[10,11,12,1,2,3,4],pc:["把",0.3]},
+ {n:"芥藍",a:["芥蘭"],c:"葉菜",w:[35,55],peak:[11,12,1,2,3],pc:["把",0.3]},
+ {n:"茼蒿",a:[],c:"葉菜",w:[40,70],peak:[11,12,1,2],pc:["把",0.25]},
+ {n:"韭菜",a:[],c:"葉菜",w:[40,70],peak:[3,4,5,9,10,11],pc:["把",0.3]},
+ {n:"芹菜",a:[],c:"葉菜",w:[40,80],peak:[11,12,1,2,3],pc:["把",0.3]},
+ {n:"龍鬚菜",a:[],c:"葉菜",w:[30,50],peak:[5,6,7,8,9,10],pc:["把",0.3]},
+ {n:"白花椰菜",a:["花菜","花椰菜"],c:"葉菜",w:[30,50],peak:[11,12,1,2,3],pc:["顆",0.6]},
+ {n:"青花菜",a:["綠花椰","西蘭花"],c:"葉菜",w:[40,70],peak:[11,12,1,2,3],pc:["顆",0.4]},
+ // 瓜果茄豆
+ {n:"牛番茄",a:["番茄"],c:"瓜果茄豆",w:[30,55],peak:[12,1,2,3,4,5],pc:["顆",0.15]},
+ {n:"小番茄",a:["聖女","玉女"],c:"瓜果茄豆",w:[60,100],peak:[12,1,2,3,4],pc:["盒",0.6]},
+ {n:"小黃瓜",a:["花胡瓜"],c:"瓜果茄豆",w:[30,60],peak:[4,5,6,10,11],pc:["條",0.1]},
+ {n:"大黃瓜",a:["胡瓜"],c:"瓜果茄豆",w:[20,40],peak:[4,5,6,10,11],pc:["條",0.6]},
+ {n:"苦瓜",a:[],c:"瓜果茄豆",w:[35,60],peak:[5,6,7,8,9,10],pc:["條",0.5]},
+ {n:"絲瓜",a:["菜瓜"],c:"瓜果茄豆",w:[25,50],peak:[5,6,7,8,9,10],pc:["條",0.6]},
+ {n:"冬瓜",a:[],c:"瓜果茄豆",w:[8,18],peak:[5,6,7,8,9,10],pc:["塊",0.6]},
+ {n:"南瓜",a:[],c:"瓜果茄豆",w:[20,35],peak:[3,4,5,6,7,8],pc:["顆",1.5]},
+ {n:"茄子",a:["麻糬茄"],c:"瓜果茄豆",w:[30,55],peak:[5,6,7,8,9,10,11],pc:["條",0.2]},
+ {n:"青椒",a:[],c:"瓜果茄豆",w:[35,60],peak:[12,1,2,3,4,5],pc:["顆",0.15]},
+ {n:"彩色甜椒",a:["甜椒","彩椒"],c:"瓜果茄豆",w:[60,100],peak:[12,1,2,3,4,5],pc:["顆",0.2]},
+ {n:"四季豆",a:["敏豆"],c:"瓜果茄豆",w:[40,80],peak:[11,12,1,2,3,4]},
+ {n:"長豆",a:["豇豆","菜豆"],c:"瓜果茄豆",w:[35,60],peak:[5,6,7,8,9],pc:["把",0.3]},
+ {n:"甜玉米",a:["玉米"],c:"瓜果茄豆",w:[20,35],peak:[11,12,1,2,3],pc:["根",0.35]},
+ {n:"綠竹筍",a:["竹筍"],c:"瓜果茄豆",w:[80,150],peak:[5,6,7,8,9],pc:["支",0.4]},
+ // 根莖蔥蒜
+ {n:"白蘿蔔",a:["菜頭"],c:"根莖蔥蒜",w:[12,25],peak:[11,12,1,2,3],pc:["條",0.8]},
+ {n:"胡蘿蔔",a:["紅蘿蔔"],c:"根莖蔥蒜",w:[15,30],peak:[1,2,3,4],pc:["條",0.2]},
+ {n:"馬鈴薯",a:["洋芋"],c:"根莖蔥蒜",w:[25,40],peak:[1,2,3],pc:["顆",0.2]},
+ {n:"洋蔥",a:[],c:"根莖蔥蒜",w:[15,35],peak:[3,4,5],pc:["顆",0.25]},
+ {n:"青蔥",a:["蔥"],c:"根莖蔥蒜",w:[60,130],peak:[10,11,12,1,2,3],pc:["把",0.15]},
+ {n:"蒜頭",a:["大蒜"],c:"根莖蔥蒜",w:[80,150],peak:[3,4,5]},
+ {n:"老薑",a:["薑"],c:"根莖蔥蒜",w:[60,100],peak:[8,9,10,11,12],pc:["塊",0.15]},
+ {n:"辣椒",a:[],c:"根莖蔥蒜",w:[60,120],peak:[11,12,1,2,3]},
+ {n:"山藥",a:[],c:"根莖蔥蒜",w:[80,120],peak:[10,11,12,1,2],pc:["段",0.6]},
+ {n:"地瓜",a:["甘藷","番薯"],c:"根莖蔥蒜",w:[20,35],peak:[9,10,11,12,1,2],pc:["顆",0.3]},
+ {n:"芋頭",a:[],c:"根莖蔥蒜",w:[40,70],peak:[9,10,11,12,1],pc:["顆",0.8]},
+ // 菇菌
+ {n:"香菇(鮮)",a:["鮮香菇"],c:"菇菌",w:[150,250],peak:ALL12,pc:["盒",0.2]},
+ {n:"杏鮑菇",a:[],c:"菇菌",w:[55,90],peak:ALL12,pc:["包",0.3]},
+ {n:"金針菇",a:[],c:"菇菌",w:[40,60],peak:ALL12,pc:["包",0.2]},
+ // 水果
+ {n:"香蕉",a:[],c:"水果",w:[20,40],peak:[5,6,7,8,9],pc:["串(約6-8根)",1.2]},
+ {n:"金鑽鳳梨",a:["鳳梨"],c:"水果",w:[20,40],peak:[3,4,5,6,7],pc:["顆",1.4]},
+ {n:"愛文芒果",a:["芒果"],c:"水果",w:[50,90],peak:[5,6,7,8],pc:["顆",0.4]},
+ {n:"珍珠芭樂",a:["芭樂","番石榴"],c:"水果",w:[25,45],peak:[10,11,12,1,2,3],pc:["顆",0.25]},
+ {n:"木瓜",a:[],c:"水果",w:[25,45],peak:[9,10,11],pc:["顆",0.8]},
+ {n:"大西瓜",a:["西瓜"],c:"水果",w:[15,25],peak:[5,6,7,8],pc:["顆",8]},
+ {n:"洋香瓜",a:["哈密瓜","香瓜"],c:"水果",w:[40,70],peak:[4,5,6,9,10],pc:["顆",1.2]},
+ {n:"巨峰葡萄",a:["葡萄"],c:"水果",w:[90,150],peak:[6,7,8,12,1],pc:["串",0.5]},
+ {n:"蓮霧",a:[],c:"水果",w:[60,120],peak:[12,1,2,3,4],pc:["顆",0.12]},
+ {n:"釋迦",a:[],c:"水果",w:[60,100],peak:[7,8,9,12,1,2],pc:["顆",0.4]},
+ {n:"火龍果",a:[],c:"水果",w:[30,60],peak:[6,7,8,9,10,11],pc:["顆",0.5]},
+ {n:"荔枝",a:["玉荷包"],c:"水果",w:[60,100],peak:[5,6,7]},
+ {n:"龍眼",a:[],c:"水果",w:[50,90],peak:[7,8,9]},
+ {n:"柳丁",a:[],c:"水果",w:[15,30],peak:[11,12,1],pc:["顆",0.2]},
+ {n:"椪柑",a:[],c:"水果",w:[25,45],peak:[10,11,12],pc:["顆",0.2]},
+ {n:"茂谷柑",a:[],c:"水果",w:[40,70],peak:[1,2,3],pc:["顆",0.2]},
+ {n:"文旦柚",a:["柚子","文旦"],c:"水果",w:[25,50],peak:[8,9],pc:["顆",0.6]},
+ {n:"甜柿",a:["柿子"],c:"水果",w:[60,100],peak:[10,11,12],pc:["顆",0.25]},
+ {n:"高接梨",a:["水梨","梨"],c:"水果",w:[50,90],peak:[6,7,8,9],pc:["顆",0.4]},
+ {n:"草莓",a:[],c:"水果",w:[200,350],peak:[12,1,2,3,4],pc:["盒",0.35]},
+ {n:"蜜棗",a:["棗子"],c:"水果",w:[50,90],peak:[12,1,2,3],pc:["顆",0.1]},
+ {n:"百香果",a:[],c:"水果",w:[50,90],peak:[6,7,8,9,10,11,12],pc:["顆",0.08]},
+ {n:"酪梨",a:["牛油果"],c:"水果",w:[60,110],peak:[7,8,9,10],pc:["顆",0.35]},
+ // 海鮮（w=批發，來源：漁產品批發市場交易行情；鮭魚為進口零售）
+ {n:"鮭魚(切片)",a:["鮭魚"],c:"海鮮",w:[420,650],retail:true,peak:ALL12,pc:["片",0.25]},
+ {n:"台灣鯛",a:["吳郭魚"],c:"海鮮",w:[55,90],peak:ALL12,pc:["尾",0.6]},
+ {n:"鯛魚片",a:["台灣鯛魚片"],c:"海鮮",w:[150,220],peak:ALL12,pc:["片",0.2]},
+ {n:"虱目魚",a:[],c:"海鮮",w:[60,100],peak:[4,5,6,7,8,9,10,11],pc:["尾",0.6]},
+ {n:"虱目魚肚",a:["魚肚"],c:"海鮮",w:[200,300],peak:[4,5,6,7,8,9,10,11],pc:["片",0.2]},
+ {n:"白帶魚",a:[],c:"海鮮",w:[150,250],peak:[9,10,11,12,1,2],pc:["段",0.25]},
+ {n:"白鯧",a:["正鯧"],c:"海鮮",w:[400,700],peak:[11,12,1,2],pc:["尾",0.5]},
+ {n:"金鯧",a:["黃金鯧"],c:"海鮮",w:[110,180],peak:ALL12,pc:["尾",0.6]},
+ {n:"鱸魚",a:["金目鱸"],c:"海鮮",w:[130,200],peak:ALL12,pc:["尾",0.7]},
+ {n:"石斑魚",a:["龍膽","青斑"],c:"海鮮",w:[250,400],peak:ALL12,pc:["尾",0.8]},
+ {n:"鯖魚",a:["花飛"],c:"海鮮",w:[80,140],peak:[10,11,12,1,2,3],pc:["尾",0.3]},
+ {n:"秋刀魚",a:[],c:"海鮮",w:[60,100],peak:[9,10,11,12],pc:["尾",0.15]},
+ {n:"午仔魚",a:["午魚"],c:"海鮮",w:[200,300],peak:[10,11,12,1,2],pc:["尾",0.4]},
+ {n:"肉魚",a:["刺鯧"],c:"海鮮",w:[150,250],peak:[9,10,11,12,1],pc:["尾",0.15]},
+ {n:"透抽",a:["小卷","鎖管"],c:"海鮮",w:[200,320],peak:[5,6,7,8,9],pc:["尾",0.3]},
+ {n:"白蝦",a:["蝦"],c:"海鮮",w:[250,400],peak:ALL12,pc:["盒",0.6]},
+ {n:"文蛤",a:["蛤蜊"],c:"海鮮",w:[100,160],peak:[4,5,6,7,8,9,10]},
+ {n:"牡蠣",a:["蚵仔","鮮蚵"],c:"海鮮",w:[160,260],peak:[4,5,6,7,8,9],pc:["盒",0.3]},
+ // 肉類（w=零售價，拍賣資料為活體，不自動更新）
+ {n:"豬五花",a:["三層肉"],c:"肉類",w:[280,380],retail:true,peak:ALL12},
+ {n:"豬里肌",a:["里肌肉"],c:"肉類",w:[250,330],retail:true,peak:ALL12,pc:["片",0.15]},
+ {n:"豬絞肉",a:["絞肉"],c:"肉類",w:[200,280],retail:true,peak:ALL12},
+ {n:"豬排骨",a:["排骨"],c:"肉類",w:[250,350],retail:true,peak:ALL12},
+ {n:"全雞",a:["土雞","仿土雞"],c:"肉類",w:[120,190],retail:true,peak:ALL12,pc:["隻",1.8]},
+ {n:"雞腿",a:["骨腿"],c:"肉類",w:[130,190],retail:true,peak:ALL12,pc:["隻",0.35]},
+ {n:"雞胸肉",a:["雞胸"],c:"肉類",w:[120,180],retail:true,peak:ALL12,pc:["片",0.3]},
+ {n:"牛腱",a:[],c:"肉類",w:[400,550],retail:true,peak:ALL12,pc:["條",0.6]},
+ {n:"牛肋條",a:[],c:"肉類",w:[450,600],retail:true,peak:ALL12},
+];
+// ─────────────────────────────────────────────────────────
+const NOW = new Date();
+const MONTH = NOW.getMonth()+1;
+const JIN = 0.6;
+document.getElementById("today").textContent =
+  `今天 ${NOW.getFullYear()}/${MONTH}/${NOW.getDate()}・打✔的是本月當季，價格會漂亮`;
+
+let cat="全部", cur=null, unit="jin";
+let LIVE={updatedAt:null, items:{}};   // prices.json 內容（記憶體，不落地）
+
+// 讀取排程產出的 prices.json（部署後由 GitHub Actions 定期更新）
+async function loadPrices(manual){
+  const tag=document.getElementById("freshTag");
+  if(manual) tag.textContent="更新中…";
+  try{
+    const r=await fetch(`prices.json?t=${Date.now()}`,{cache:"no-store"});
+    if(!r.ok) throw 0;
+    const j=await r.json();
+    if(j && j.items && j.updatedAt){
+      LIVE=j;
+      const d=new Date(j.updatedAt);
+      tag.textContent=`行情已更新：${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}（近${j.days||30}天批發均價）`;
+      tag.classList.add("live");
+      if(cur) refreshPanelRef();
+      judge();
+    } else throw 0;
+  }catch(e){
+    tag.textContent=manual?"更新失敗，沿用內建基準（部署後才有 prices.json）":"行情：內建基準值";
+    tag.classList.remove("live");
+  }
+}
+document.getElementById("refreshBtn").onclick=()=>loadPrices(true);
+loadPrices(false);
+
+function inSeason(it){ return it.peak.includes(MONTH); }
+function isAllYear(it){ return it.peak.length===12; }
+function liveOf(it){ const v=LIVE.items[it.n]; return (v && v.kg>0)?v:null; }
+// 合理零售區間（元/公斤）
+// 有 live 資料：近30天均價已含季節因素，直接 ×加成 ×(0.8~1.15)
+// 無 live：內建區間中價 ×加成 ×產季係數 ×(0.8~1.15)
+function fairKg(it){
+  const markup = it.retail?1:1.8;
+  const lv=liveOf(it);
+  if(lv){ const base=lv.kg*markup; return [base*0.8, base*1.15]; }
+  const mid=(it.w[0]+it.w[1])/2*markup;
+  const f = isAllYear(it)?1:(inSeason(it)?0.85:1.15);
+  return [mid*f*0.8, mid*f*1.15];
+}
+const rd = v => v>=100?Math.round(v/5)*5:Math.round(v);
+const rd1 = v => v>=10?rd(v):Math.round(v*10)/10;
+
+const chipsEl=document.getElementById("chips");
+CATS.forEach(c=>{
+  const b=document.createElement("button");
+  b.className="chip"+(c===cat?" on":""); b.textContent=c;
+  b.onclick=()=>{cat=c;[...chipsEl.children].forEach(x=>x.classList.toggle("on",x.textContent===c));render();};
+  chipsEl.appendChild(b);
+});
+
+const grid=document.getElementById("grid"), emptyEl=document.getElementById("empty");
+function render(){
+  const q=document.getElementById("q").value.trim();
+  grid.innerHTML="";
+  const list=DB.filter(it=>
+    (cat==="全部"||it.c===cat) &&
+    (!q || it.n.includes(q) || it.a.some(a=>a.includes(q)))
+  ).sort((a,b)=> (inSeason(b)&&!isAllYear(b)) - (inSeason(a)&&!isAllYear(a)));
+  emptyEl.style.display=list.length?"none":"block";
+  list.forEach(it=>{
+    const d=document.createElement("button");
+    const hot = inSeason(it)&&!isAllYear(it);
+    d.className="item"+(hot?" season":"");
+    const sub = isAllYear(it)?"全年供應":(inSeason(it)?"✔ 本月當季":"盛產 "+it.peak[0]+"–"+it.peak[it.peak.length-1]+"月");
+    d.innerHTML=`<div class="nm">${it.n}</div><div class="pk">${sub}</div>`;
+    d.onclick=()=>openPanel(it);
+    grid.appendChild(d);
+  });
+}
+document.getElementById("q").addEventListener("input",render);
+render();
+
+const panel=document.getElementById("panel"), ov=document.getElementById("ov");
+const uJin=document.getElementById("uJin"), uKg=document.getElementById("uKg"), uPc=document.getElementById("uPc");
+const pcHint=document.getElementById("pcHint");
+
+function setUnit(u){
+  unit=u;
+  uJin.classList.toggle("on",u==="jin");
+  uKg.classList.toggle("on",u==="kg");
+  uPc.classList.toggle("on",u==="pc");
+  updatePcHint(); judge();
+}
+uJin.onclick=()=>setUnit("jin");
+uKg.onclick=()=>setUnit("kg");
+uPc.onclick=()=>setUnit("pc");
+
+function updatePcHint(){
+  if(cur && cur.pc && unit==="pc"){
+    const [lbl,kg]=cur.pc;
+    const jin=(kg/JIN);
+    pcHint.textContent=`以中等大小一${lbl}約 ${kg} 公斤（${jin%1?jin.toFixed(1):jin} 台斤）估算，特大特小請自行斟酌`;
+    pcHint.classList.add("show");
+  }else pcHint.classList.remove("show");
+}
+
+function refreshPanelRef(){
+  const it=cur; if(!it) return;
+  const [lo,hi]=fairKg(it);
+  document.getElementById("pRange").innerHTML=`${rd(lo*JIN)}～${rd(hi*JIN)} <small>元/台斤</small>`;
+  let sub=`約 ${rd(lo)}～${rd(hi)} 元/公斤`;
+  if(it.pc){ const [lbl,kg]=it.pc; sub+=`・一${lbl.replace(/\(.+\)/,"")}約 ${rd1(lo*kg)}～${rd1(hi*kg)} 元`; }
+  document.getElementById("pRangeKg").textContent=sub;
+  const src=document.getElementById("pSrc");
+  const lv=liveOf(it);
+  if(lv){ src.textContent=`基準：近${LIVE.days||30}天批發均價 ${lv.kg.toFixed(1)} 元/公斤（${lv.n} 筆，自動更新）`; src.className="src live"; }
+  else if(it.retail){ src.textContent="基準：市場零售概略值（此類無對應拍賣資料）"; src.className="src"; }
+  else { src.textContent="基準：內建概略值（部署後會自動換成官方行情）"; src.className="src"; }
+}
+
+function openPanel(it){
+  cur=it;
+  document.getElementById("pName").textContent=it.n;
+  document.getElementById("pCat").textContent=it.c+(it.a.length?"｜又叫 "+it.a.join("、"):"");
+  const badge=document.getElementById("pBadge");
+  if(isAllYear(it)){ badge.textContent="全年供應"; badge.className="badge all"; }
+  else if(inSeason(it)){ badge.textContent="本月當季 ✔"; badge.className="badge in"; }
+  else { badge.textContent="非產季"; badge.className="badge off"; }
+  document.getElementById("pDotsLbl").textContent=isAllYear(it)?"供應月份：":"盛產月份：";
+  const dots=document.getElementById("pDots"); dots.innerHTML="";
+  for(let m=1;m<=12;m++){
+    const s=document.createElement("span");
+    s.className="mdot"+(it.peak.includes(m)?" on":"")+(m===MONTH?" now":"");
+    s.textContent=m; dots.appendChild(s);
+  }
+  refreshPanelRef();
+  if(it.pc){
+    uPc.style.display="";
+    uPc.textContent=`元/${it.pc[0].replace(/\(.+\)/,"")}`;
+  }else{
+    uPc.style.display="none";
+    if(unit==="pc") unit="jin";
+  }
+  setUnit(unit);
+  document.getElementById("price").value="";
+  document.getElementById("stamp").className="stamp";
+  const lb=document.getElementById("liveBtn");
+  lb.style.display = (it.c==="肉類"||it.retail)?"none":"";
+  document.getElementById("liveOut").textContent=(it.c==="肉類")?"肉類拍賣資料為活體價，與零售分切價差距大，維持內建零售基準。":"";
+  ov.classList.add("show"); panel.classList.add("show");
+}
+ov.onclick=()=>{ov.classList.remove("show");panel.classList.remove("show");};
+
+document.getElementById("price").addEventListener("input",judge);
+function judge(){
+  const v=parseFloat(document.getElementById("price").value);
+  const st=document.getElementById("stamp");
+  if(!cur||!v||v<=0){st.className="stamp";return;}
+  let priceKg;
+  if(unit==="jin") priceKg = v/JIN;
+  else if(unit==="kg") priceKg = v;
+  else priceKg = v/cur.pc[1];
+  const [lo,hi]=fairKg(cur);
+  const big=document.getElementById("stampBig"), why=document.getElementById("stampWhy");
+  let rngTxt;
+  if(unit==="pc"){
+    const [lbl,kg]=cur.pc;
+    rngTxt=`合理約一${lbl.replace(/\(.+\)/,"")} ${rd1(lo*kg)}～${rd1(hi*kg)} 元`;
+  }else{
+    rngTxt=`合理約 ${rd(lo*JIN)}～${rd(hi*JIN)} 元/台斤`;
+  }
+  if(priceKg < lo){ st.className="stamp show cheap"; big.textContent="俗！買起來"; why.textContent=`低於${rngTxt}，可以下手`; }
+  else if(priceKg <= hi){ st.className="stamp show fair"; big.textContent="價格合理"; why.textContent=rngTxt+"，正常行情"; }
+  else{ st.className="stamp show exp"; big.textContent="偏貴，再比比"; why.textContent=`高於${rngTxt}${(inSeason(cur)||isAllYear(cur))?"":"（現在非產季，貴很正常）"}`; }
+}
+
+// 單品項即時查詢（第三層手動更新；蔬果與海鮮走不同 API）
+document.getElementById("liveBtn").onclick=async()=>{
+  const out=document.getElementById("liveOut");
+  out.textContent="查詢中…";
+  const fmt=d=>`${d.getFullYear()-1911}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`;
+  const s=new Date(NOW); s.setDate(s.getDate()-7);
+  const key=(cur.a[0]||cur.n).replace(/\(.+\)/,"");
+  const isFish = cur.c==="海鮮";
+  const url = isFish
+    ? `https://data.moa.gov.tw/api/v1/AquaticTransData/?Start_time=${fmt(s)}&End_time=${fmt(NOW)}`
+    : `https://data.moa.gov.tw/api/v1/AgriProductsTransType/?Start_time=${fmt(s)}&End_time=${fmt(NOW)}&CropName=${encodeURIComponent(key)}`;
+  try{
+    const r=await fetch(url);
+    const j=await r.json();
+    let rows=(j.Data||[]);
+    const nameOf=x=>x.CropName||x.FishName||x["魚貨名稱"]||x["作物名稱"]||"";
+    const priceOf=x=>+(x.Avg_Price??x.AvgPrice??x["平均價"]??0);
+    if(isFish) rows=rows.filter(x=>nameOf(x).includes(key)||nameOf(x).includes(cur.n.replace(/\(.+\)/,"")));
+    rows=rows.filter(x=>priceOf(x)>0);
+    if(!rows.length) throw new Error("no data");
+    const avg=rows.reduce((a,x)=>a+priceOf(x),0)/rows.length;
+    let msg=`近 7 天批發均價約 <b>${avg.toFixed(1)} 元/公斤</b>（${rows.length} 筆）。零售參考約 ${rd(avg*1.5*JIN)}～${rd(avg*2*JIN)} 元/台斤`;
+    if(cur.pc) msg+=`、一${cur.pc[0].replace(/\(.+\)/,"")}約 ${rd1(avg*1.5*cur.pc[1])}～${rd1(avg*2*cur.pc[1])} 元`;
+    out.innerHTML=msg+"。";
+  }catch(e){
+    out.innerHTML=`此環境無法連外部 API（部署到自己的網站後可用）。也可直接開 <a href="https://amis.afa.gov.tw" target="_blank" rel="noopener">批發行情站</a> 查「${cur.n}」。`;
+  }
+};
+</script>
+</body>
+</html>
