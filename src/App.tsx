@@ -2,10 +2,12 @@ import { useMemo, useState } from "react";
 import itemsJson from "../data/items.json";
 import { filterItems } from "./lib/catalog";
 import type { Item } from "./lib/types";
-import Header, { type FreshTag } from "./components/Header";
+import { usePrices, liveOf } from "./hooks/usePrices";
+import Header from "./components/Header";
 import SearchBar from "./components/SearchBar";
 import CategoryChips from "./components/CategoryChips";
 import ItemGrid from "./components/ItemGrid";
+import ItemSheet from "./components/ItemSheet";
 
 const DB = itemsJson as Item[];
 const NOW = new Date();
@@ -14,9 +16,9 @@ const MONTH = NOW.getMonth() + 1;
 export default function App() {
   const [cat, setCat] = useState("全部");
   const [q, setQ] = useState("");
-  const [, setCurrent] = useState<Item | null>(null);
+  const [current, setCurrent] = useState<Item | null>(null);
+  const { prices, tag, refresh } = usePrices();
 
-  const tag: FreshTag = { text: "行情：內建基準值", live: false };
   const list = useMemo(() => filterItems(DB, cat, q, MONTH), [cat, q]);
 
   return (
@@ -26,7 +28,7 @@ export default function App() {
         month={MONTH}
         day={NOW.getDate()}
         tag={tag}
-        onRefresh={() => {}}
+        onRefresh={refresh}
       />
       <div className="sheet">
         <SearchBar value={q} onChange={setQ} />
@@ -41,6 +43,13 @@ export default function App() {
         </a>
         。
       </footer>
+      <ItemSheet
+        item={current}
+        live={current ? liveOf(prices, current) : null}
+        liveDays={prices?.days ?? 30}
+        month={MONTH}
+        onClose={() => setCurrent(null)}
+      />
     </>
   );
 }
