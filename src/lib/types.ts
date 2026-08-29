@@ -17,6 +17,8 @@ export interface Item {
   pc?: [string, number];
   /** 官方品名關鍵字（抓價腳本與 L3 查詢用）；無 = 不自動更新 */
   api?: string[];
+  /** 挑選要領：一句話教你在攤位前挑出品質好的 */
+  pick: string;
 }
 
 export interface PriceEntry {

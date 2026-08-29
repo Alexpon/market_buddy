@@ -31,6 +31,13 @@ describe("items.json 資料完整性", () => {
     });
   });
 
+  it("每個品項都有挑選要領（pick）", () => {
+    db.forEach((i) => {
+      expect(typeof i.pick, i.n).toBe("string");
+      expect(i.pick.length, `${i.n} 的 pick 太短`).toBeGreaterThanOrEqual(10);
+    });
+  });
+
   it("pc 單位重量為正", () => {
     db.filter((i) => i.pc).forEach((i) => expect(i.pc![1], i.n).toBeGreaterThan(0));
   });

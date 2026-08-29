@@ -145,6 +145,10 @@ export default function ItemSheet({ item, live, liveDays, month, onClose }: Prop
           )}
         </div>
         <PriceStamp verdict={verdict} big={big} why={why} />
+        <div className="pick">
+          <div className="lbl">👀 怎麼挑</div>
+          <div className="txt">{item.pick}</div>
+        </div>
         <LiveQuery item={item} />
       </div>
     </>

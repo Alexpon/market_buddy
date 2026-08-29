@@ -3,11 +3,11 @@ import { JIN, toKgPrice, fairKg, rd, rd1, judgeVerdict } from "../src/lib/pricin
 import type { Item } from "../src/lib/types";
 
 const veg = {
-  n: "高麗菜", a: [], c: "葉菜", w: [15, 25], peak: [12, 1, 2, 3, 4], pc: ["顆", 1.8],
+  n: "高麗菜", a: [], c: "葉菜", w: [15, 25], peak: [12, 1, 2, 3, 4], pc: ["顆", 1.8], pick: "測試用挑選要領",
 } as Item;
 const meat = {
   n: "豬五花", a: [], c: "肉類", w: [280, 380], retail: true,
-  peak: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+  peak: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], pick: "測試用挑選要領"
 } as Item;
 
 describe("toKgPrice", () => {
