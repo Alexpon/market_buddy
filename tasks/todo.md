@@ -22,7 +22,7 @@
 - [x] Task 11: L3 單品即時查詢（併入 Task 9）
 - [x] Task 12: 真實抓價 + 品名對照校準（80/83 命中）
 - [x] Task 13: E2E 驗證 + README
-- [ ] 使用者確認後刪 handover/
+- [x] 使用者確認後刪 handover/（2026-08-30 已刪，merge 至 main）
 
 ## Review
 
