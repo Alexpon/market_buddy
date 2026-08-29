@@ -1,0 +1,26 @@
+name: 更新菜價行情
+on:
+  schedule:
+    - cron: "0 22 * * *" # UTC 22:00 = 台北 06:00
+  workflow_dispatch: {} # Actions 頁面可手動 Run workflow
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: 抓取行情
+        run: npm run update-prices
+      - name: 提交 prices.json
+        run: |
+          git config user.name "price-bot"
+          git config user.email "actions@github.com"
+          git add public/prices.json
+          git diff --cached --quiet || git commit -m "行情更新 $(date +'%Y-%m-%d')"
+          git push
