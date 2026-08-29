@@ -45,6 +45,8 @@ export default function ItemSheet({ item, live, liveDays, month, onClose }: Prop
     srcLive = true;
   } else if (item.retail) {
     srcText = "基準：市場零售概略值（此類無對應拍賣資料）";
+  } else if (!item.api?.length) {
+    srcText = "基準：內建概略值（此品項無對應批發資料）";
   } else {
     srcText = "基準：內建概略值（部署後會自動換成官方行情）";
   }

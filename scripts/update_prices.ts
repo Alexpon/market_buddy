@@ -12,29 +12,43 @@ const ITEMS_PATH = fileURLToPath(new URL("../data/items.json", import.meta.url))
 const OUT_PATH = fileURLToPath(new URL("../public/prices.json", import.meta.url));
 
 const items = JSON.parse(readFileSync(ITEMS_PATH, "utf8")) as Item[];
-const end = new Date();
-const start = new Date(end);
-start.setDate(start.getDate() - DAYS);
 
-console.log(`抓取近 ${DAYS} 天（${start.toISOString().slice(0, 10)} ~ ${end.toISOString().slice(0, 10)}）…`);
+// MOA API 分頁實測是壞的：結果超過 1000 筆時 Next=true 但第 2 頁回空，
+// 資料會被靜默截斷。改逐日抓（單日各源皆 <1000 筆）以取得完整資料。
+const days: Date[] = [];
+for (let i = 0; i < DAYS; i++) {
+  const d = new Date();
+  d.setDate(d.getDate() - i);
+  days.push(d);
+}
+console.log(`逐日抓取近 ${DAYS} 天（${days[DAYS - 1].toISOString().slice(0, 10)} ~ ${days[0].toISOString().slice(0, 10)}）…`);
 
 const collected: Record<string, { kg: number; n: number }> = {};
 
-async function run(label: string, urlFor: (page: number) => string, subset: Item[]) {
-  try {
-    const rows = await fetchAllPages(urlFor);
-    console.log(`${label} 原始筆數：${rows.length}`);
-    Object.assign(collected, aggregate(rows, subset));
-  } catch (e) {
-    console.error(`${label} 抓取失敗：`, (e as Error).message);
+async function run(label: string, urlForDay: (d: Date, page: number) => string, subset: Item[]) {
+  const rows: unknown[] = [];
+  let failed = 0;
+  for (const d of days) {
+    try {
+      const dayRows = await fetchAllPages((p) => urlForDay(d, p));
+      rows.push(...dayRows);
+      if (dayRows.length >= 1000) {
+        console.warn(`${label} ${d.toISOString().slice(0, 10)} 達單頁上限 1000 筆，該日可能被截斷`);
+      }
+    } catch (e) {
+      failed++;
+      console.error(`${label} ${d.toISOString().slice(0, 10)} 抓取失敗：`, (e as Error).message);
+    }
   }
+  console.log(`${label} 原始筆數：${rows.length}${failed ? `（${failed} 天失敗）` : ""}`);
+  Object.assign(collected, aggregate(rows, subset));
 }
 
 const vegItems = items.filter((i) => i.c !== "海鮮");
 const fishItems = items.filter((i) => i.c === "海鮮");
 
-await run("蔬果", (p) => vegUrl(start, end, p), vegItems);
-await run("漁產", (p) => fishUrl(start, end, p), fishItems);
+await run("蔬果", (d, p) => vegUrl(d, d, p), vegItems);
+await run("漁產", (d, p) => fishUrl(d, d, p), fishItems);
 
 if (Object.keys(collected).length === 0) {
   console.error("兩個資料源都沒抓到資料，不覆寫 prices.json");

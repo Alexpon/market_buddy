@@ -19,17 +19,16 @@ export default function LiveQuery({ item }: Props) {
     setOut(item.c === "肉類" ? "肉類拍賣資料為活體價，與零售分切價差距大，維持內建零售基準。" : "");
   }, [item]);
 
-  // 肉類與 retail 品項無對應批發資料，不提供即時查詢
-  if (item.c === "肉類" || item.retail) {
+  // 肉類、retail、無 api 對照的品項（如鯛魚片）沒有對應批發資料，不提供即時查詢
+  if (item.c === "肉類") {
     return (
       <div className="live">
-        <div className="out">
-          {item.c === "肉類"
-            ? "肉類拍賣資料為活體價，與零售分切價差距大，維持內建零售基準。"
-            : ""}
-        </div>
+        <div className="out">肉類拍賣資料為活體價，與零售分切價差距大，維持內建零售基準。</div>
       </div>
     );
+  }
+  if (item.retail || !item.api?.length) {
+    return <div className="live" />;
   }
 
   const query = async () => {
@@ -46,7 +45,7 @@ export default function LiveQuery({ item }: Props) {
       const j = (await r.json()) as MoaResponse;
       const keys = item.api ?? [key];
       const rows = (j.Data ?? []).filter(
-        (x) => priceOf(x) > 0 && keys.some((k) => nameOf(x).includes(k)),
+        (x) => priceOf(x) > 0 && keys.some((k) => nameOf(x).startsWith(k)),
       );
       if (!rows.length) throw new Error("no data");
       const avg = rows.reduce((a: number, x) => a + priceOf(x), 0) / rows.length;

@@ -48,8 +48,10 @@ export const priceOf = (row: unknown): number => {
 };
 
 /**
- * 依品項的 api 關鍵字（includes 部分比對，官方品名常帶品種後綴如「甘藍 初秋」）
- * 聚合原始交易列 → { 品名: {kg: 均價一位小數, n: 筆數} }。price=0（休市列等）剔除。
+ * 依品項的 api 關鍵字聚合原始交易列 → { 品名: {kg: 均價一位小數, n: 筆數} }。
+ * 官方品名格式為「主類-品種」（如「番茄-牛番茄」「甘藍-初秋」），用**前綴比對**
+ * 避免 includes 的污染（「蘿蔔」誤吃「胡蘿蔔」、「胡瓜」誤吃「花胡瓜」）。
+ * price=0（休市列等）剔除。
  */
 export function aggregate(rows: unknown[], items: Item[]): Record<string, PriceEntry> {
   const out: Record<string, PriceEntry> = {};
@@ -62,7 +64,7 @@ export function aggregate(rows: unknown[], items: Item[]): Record<string, PriceE
       const p = priceOf(row);
       if (p <= 0) continue;
       const name = nameOf(row);
-      if (keys.some((k) => name.includes(k))) {
+      if (keys.some((k) => name.startsWith(k))) {
         sum += p;
         n++;
       }

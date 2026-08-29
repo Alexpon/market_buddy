@@ -35,9 +35,12 @@ describe("items.json 資料完整性", () => {
     db.filter((i) => i.pc).forEach((i) => expect(i.pc![1], i.n).toBeGreaterThan(0));
   });
 
-  it("蔬果海鮮除 retail 外都有 api 關鍵字（可自動更新）", () => {
-    db.filter((i) => i.c !== "肉類" && !i.retail).forEach((i) =>
-      expect(i.api?.length, `${i.n} 缺 api`).toBeGreaterThan(0),
+  // 鯛魚片：批發拍賣只有整尾魚，無魚片資料，維持內建基準（不自動更新）
+  const NO_API_EXCEPTIONS = ["鯛魚片"];
+
+  it("蔬果海鮮除 retail 與已知例外，都有 api 關鍵字（可自動更新）", () => {
+    db.filter((i) => i.c !== "肉類" && !i.retail && !NO_API_EXCEPTIONS.includes(i.n)).forEach(
+      (i) => expect(i.api?.length, `${i.n} 缺 api`).toBeGreaterThan(0),
     );
   });
 
