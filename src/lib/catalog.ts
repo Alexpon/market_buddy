@@ -1,13 +1,13 @@
 import type { Item } from "./types";
-import { inSeason, isAllYear } from "./season";
+import { inSeason } from "./season";
 
 /**
  * 分類 + 關鍵字（品名/別名 includes）過濾，
- * 當季且非全年供應的品項排前，其餘維持原順序（Array.sort 為 stable）。
+ * 當季品項（含全年供應）排前，非產季排後，同組維持原順序（Array.sort 為 stable）。
  */
 export function filterItems(db: Item[], cat: string, q: string, month: number): Item[] {
   const kw = q.trim();
-  const hot = (it: Item) => (inSeason(it, month) && !isAllYear(it) ? 1 : 0);
+  const hot = (it: Item) => (inSeason(it, month) ? 1 : 0);
   return db
     .filter(
       (it) =>
