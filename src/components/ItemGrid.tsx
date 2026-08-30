@@ -1,5 +1,5 @@
 import type { Item } from "../lib/types";
-import { inSeason, isAllYear, seasonSub } from "../lib/season";
+import { inSeason, seasonSub } from "../lib/season";
 
 interface Props {
   items: Item[];
@@ -14,7 +14,7 @@ export default function ItemGrid({ items, month, onSelect }: Props) {
   return (
     <div className="grid">
       {items.map((it) => {
-        const hot = inSeason(it, month) && !isAllYear(it);
+        const hot = inSeason(it, month); // 全年供應也算當季，一樣標「旺」
         return (
           <button key={it.n} className={"item" + (hot ? " season" : "")} onClick={() => onSelect(it)}>
             <div className="nm">{it.n}</div>
