@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Item } from "../lib/types";
-import { vegUrl, fishUrl, nameOf, priceOf, type MoaResponse } from "../lib/moa";
+import { queryLive } from "../lib/live";
 import { JIN, rd, rd1 } from "../lib/pricing";
 
 interface Props {
@@ -31,46 +31,40 @@ export default function LiveQuery({ item }: Props) {
     return <div className="live" />;
   }
 
+  const amisLink = (
+    <a href="https://amis.afa.gov.tw" target="_blank" rel="noopener noreferrer">
+      批發行情站
+    </a>
+  );
+
   const query = async () => {
     setBusy(true);
     setOut("查詢中…");
     const end = new Date();
     const start = new Date(end);
     start.setDate(start.getDate() - 7);
-    const key = stripParen(item.api?.[0] ?? item.a[0] ?? item.n);
-    const isFish = item.c === "海鮮";
-    const url = isFish ? fishUrl(start, end, 1, key) : vegUrl(start, end, 1, key);
-    try {
-      const r = await fetch(url, { headers: { accept: "application/json" } });
-      const j = (await r.json()) as MoaResponse;
-      const keys = item.api ?? [key];
-      const rows = (j.Data ?? []).filter(
-        (x) => priceOf(x) > 0 && keys.some((k) => nameOf(x).startsWith(k)),
-      );
-      if (!rows.length) throw new Error("no data");
-      const avg = rows.reduce((a: number, x) => a + priceOf(x), 0) / rows.length;
-      let retail = `零售參考約 ${rd(avg * 1.5 * JIN)}～${rd(avg * 2 * JIN)} 元/台斤`;
+    const r = await queryLive(item, start, end);
+    if (r.status === "ok") {
+      let retail = `零售參考約 ${rd(r.avg * 1.5 * JIN)}～${rd(r.avg * 2 * JIN)} 元/台斤`;
       if (item.pc) {
-        retail += `、一${stripParen(item.pc[0])}約 ${rd1(avg * 1.5 * item.pc[1])}～${rd1(avg * 2 * item.pc[1])} 元`;
+        retail += `、一${stripParen(item.pc[0])}約 ${rd1(r.avg * 1.5 * item.pc[1])}～${rd1(r.avg * 2 * item.pc[1])} 元`;
       }
       setOut(
         <>
-          近 7 天批發均價約 <b>{avg.toFixed(1)} 元/公斤</b>（{rows.length} 筆）。{retail}。
+          近 7 天批發均價約 <b>{r.avg.toFixed(1)} 元/公斤</b>（{r.n} 筆）。{retail}。
         </>,
       );
-    } catch {
+    } else if (r.status === "empty") {
       setOut(
         <>
-          目前連不上農業部 API，請稍後再試。也可直接開{" "}
-          <a href="https://amis.afa.gov.tw" target="_blank" rel="noopener noreferrer">
-            批發行情站
-          </a>{" "}
-          查「{item.n}」。
+          近 7 天查無「{item.n}」的批發交易，可能非產季或市場休市，先參考上方基準價。也可開{" "}
+          {amisLink} 查看。
         </>,
       );
-    } finally {
-      setBusy(false);
+    } else {
+      setOut(<>目前連不上農業部 API，請稍後再試。也可直接開 {amisLink} 查「{item.n}」。</>);
     }
+    setBusy(false);
   };
 
   return (
